@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#03070d">
+<title>ARENA RC — ESP32 Controller</title>
+<style>
+:root{
+  --bg:#02050a; --panel:#07111c; --panel2:#0b1724; --line:#183149;
+  --text:#f4f8ff; --muted:#7f93a8; --blue:#08bfff; --blue2:#006dff;
+  --red:#ff2638; --red2:#9b0010; --yellow:#ffc400; --green:#00e676;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:radial-gradient(circle at 50% 20%,#0b1a29 0,#02050a 55%);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;touch-action:none}
+body{display:flex;justify-content:center}
+button,input{font:inherit}
+button{cursor:pointer;touch-action:none}
+.app{width:min(1500px,100%);height:100%;padding:12px;display:flex;flex-direction:column;gap:10px;position:relative}
+.app:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 0 48%,rgba(0,191,255,.025) 48.2% 48.5%,transparent 49%),repeating-linear-gradient(0deg,transparent 0 7px,rgba(255,255,255,.012) 8px);}
+.top{height:76px;display:grid;grid-template-columns:1.1fr 1.6fr auto;gap:12px;align-items:stretch;position:relative;z-index:2}
+.brand,.connection,.stop{border:1px solid var(--line);background:linear-gradient(135deg,#091522,#050b12);position:relative;overflow:hidden}
+.brand{display:flex;align-items:center;padding:0 22px;clip-path:polygon(0 0,96% 0,100% 28%,100% 100%,4% 100%,0 72%);border-left:4px solid var(--red)}
+.brand:after,.connection:after{content:"";position:absolute;inset:auto 0 0 0;height:2px;background:linear-gradient(90deg,var(--red),var(--blue),transparent)}
+.logoMark{width:45px;height:45px;margin-right:14px;position:relative;background:repeating-linear-gradient(135deg,#fff 0 7px,transparent 7px 13px);clip-path:polygon(0 0,100% 0,72% 100%,0 100%);opacity:.95}
+.brandText{font-size:25px;font-weight:950;letter-spacing:.05em;font-style:italic}.brandText b{color:var(--red)}
+.brandSub{font-size:10px;color:#91a8bd;letter-spacing:.17em;margin-top:3px}
+.connection{display:flex;align-items:center;padding:0 20px;gap:14px;clip-path:polygon(3% 0,97% 0,100% 30%,97% 100%,3% 100%,0 70%)}
+.btIcon{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--blue);color:var(--blue);font-size:25px;box-shadow:0 0 18px rgba(0,191,255,.25)}
+.connTitle{font-size:18px;font-weight:800}.connState{font-size:12px;color:var(--green);font-weight:700;margin-top:3px}.connDot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);margin-right:6px}
+.stop{border:2px solid var(--red);color:#fff;background:linear-gradient(180deg,#d70d22,#76000b);padding:0 25px;font-weight:950;font-size:18px;letter-spacing:.06em;clip-path:polygon(12% 0,100% 0,88% 100%,0 100%);box-shadow:0 0 20px rgba(255,38,56,.18)}
+.stop:active{transform:scale(.98)}
+.main{flex:1;min-height:0;display:grid;grid-template-columns:340px 1fr 245px;gap:10px;position:relative;z-index:1}
+.card{background:linear-gradient(145deg,rgba(10,23,36,.98),rgba(3,8,14,.98));border:1px solid #17405e;box-shadow:inset 0 0 25px rgba(0,140,255,.035),0 10px 30px rgba(0,0,0,.3);position:relative;overflow:hidden}
+.card:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(135deg,rgba(0,191,255,.04),transparent 30%,transparent 70%,rgba(255,38,56,.035));}
+.cardTitle{position:absolute;left:18px;top:15px;font-size:15px;font-weight:900;letter-spacing:.08em;z-index:3}.cardTitle span{color:var(--blue)}
+.steering{display:flex;align-items:center;justify-content:center;padding-top:30px}
+.joyWrap{width:min(285px,80%);aspect-ratio:1;position:relative;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#101c29 0 52%,#07101a 53% 68%,#03070c 69%);border:2px solid #31495f;box-shadow:0 0 0 5px #07111b,0 0 0 7px #183149,0 0 35px rgba(0,191,255,.09)}
+.joyWrap:before{content:"";position:absolute;inset:-7px;border-radius:50%;border:4px solid transparent;border-top-color:var(--red);border-right-color:var(--red);filter:drop-shadow(0 0 8px rgba(255,38,56,.7));transform:rotate(-35deg)}
+.joyWrap:after{content:"";position:absolute;inset:18%;border-radius:50%;border:1px dashed #2b455c}
+.tick{position:absolute;inset:8%;border-radius:50%;background:repeating-conic-gradient(from -5deg,transparent 0 9deg,#557085 9deg 10deg,transparent 10deg 18deg);opacity:.4;mask:radial-gradient(circle,transparent 0 62%,#000 63%)}
+.stick{position:absolute;width:37%;height:37%;border-radius:50%;background:radial-gradient(circle at 35% 28%,#526477 0,#182532 35%,#050a10 72%);border:3px solid #526779;box-shadow:inset 0 8px 14px #fff1,0 10px 25px #000;z-index:3;transform:translate(0,0)}
+.stick:after{content:"";position:absolute;inset:13%;border-radius:50%;border:1px solid #8197aa;opacity:.45}
+.arrow{position:absolute;font-size:31px;font-weight:900;color:#f2f8ff;text-shadow:0 0 8px #fff;z-index:2}.aTop{top:7%}.aBottom{bottom:7%}.aLeft{left:7%}.aRight{right:7%}
+.readouts{position:absolute;bottom:13px;left:22px;right:22px;display:flex;justify-content:space-between;font-size:12px;color:#9cb1c4;z-index:4}.readouts strong{display:block;font-size:24px;color:#f6fbff;line-height:1}.cyan{color:var(--blue)!important}
+.arenaCard{display:flex;align-items:center;justify-content:center;padding:46px 14px 14px}
+.arenaTitle{position:absolute;left:20px;top:15px;font-size:17px;font-weight:900;letter-spacing:.08em}.arenaTitle span{color:var(--blue)}
+.arena{width:100%;height:100%;position:relative;border:1px solid #15506e;background:#06131d;overflow:hidden;perspective:900px}
+.arena:before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(0,191,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(0,191,255,.07) 1px,transparent 1px);background-size:34px 34px;opacity:.45}
+.trackSurface{position:absolute;left:9%;right:9%;top:9%;bottom:9%;background:linear-gradient(135deg,#333a40,#20272d);transform:skewY(-7deg) rotateX(10deg);border:3px solid #58616a;box-shadow:0 20px 40px #0008;overflow:hidden}
+.finish{position:absolute;left:5%;top:8%;width:17%;height:7%;background:repeating-linear-gradient(90deg,#fff 0 9px,#111 9px 18px);transform:rotate(-8deg)}
+.ob{position:absolute;background:#a76b2d;box-shadow:0 4px 0 #593514,0 8px 12px #0008}.rampShape{position:absolute;left:44%;top:13%;width:18%;height:25%;background:linear-gradient(135deg,#4169e1,#1743a0);clip-path:polygon(0 22%,100% 0,100% 100%,0 76%);box-shadow:0 0 18px #2468ff55}
+.rail1{left:7%;top:18%;width:29%;height:7%;transform:rotate(-16deg)}.rail2{left:10%;top:33%;width:25%;height:6%;transform:rotate(-16deg)}.rail3{left:15%;top:48%;width:18%;height:6%;transform:rotate(-27deg)}
+.slalom{position:absolute;left:48%;top:53%;display:flex;gap:18px;transform:rotate(-8deg)}.slalom i{display:block;width:12px;height:38px;background:var(--yellow);box-shadow:0 0 8px #ffc40055}
+.jump{right:17%;top:48%;width:17%;height:8%;transform:rotate(14deg)}
+.trackEdge{position:absolute;right:8%;bottom:13%;width:26%;height:7%;background:#9b6a33;transform:rotate(-20deg)}
+.mapCar{position:absolute;right:19%;bottom:18%;width:34px;height:20px;border-radius:6px;background:var(--yellow);box-shadow:0 0 14px #ffc40099,0 0 0 2px #4c3c00;z-index:4;transition:transform .08s linear}
+.mapCar:before,.mapCar:after{content:"";position:absolute;bottom:-5px;width:9px;height:9px;border-radius:50%;background:#080b0f}.mapCar:before{left:4px}.mapCar:after{right:4px}
+.legend{position:absolute;right:15px;bottom:15px;background:#04101aee;border:1px solid #1b4c68;border-radius:9px;padding:9px 11px;font-size:10px;line-height:1.8;z-index:5}.legend b{font-size:12px}.legend i{display:inline-block;width:12px;height:8px;margin-right:6px;border-radius:2px}.lblue{background:#4169e1}.lyellow{background:var(--yellow)}.lwood{background:#a76b2d}.lred{background:var(--red)}
+.throttleCard{padding:45px 20px 22px;display:flex;flex-direction:column;align-items:center}.throttleTitle{position:absolute;left:20px;top:15px;font-size:17px;font-weight:900;letter-spacing:.08em}.throttleRail{height:75%;width:60px;border:2px solid #43586b;border-radius:30px;background:#03080d;position:relative;margin-top:20px;box-shadow:inset 0 0 18px #000}
+.throttleFill{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:16px;height:0;border-radius:10px;background:linear-gradient(#00d8ff,#0068ff);box-shadow:0 0 14px #00bfff88;transition:height .05s}
+.throttleKnob{position:absolute;left:50%;bottom:7px;transform:translate(-50%,50%);width:45px;height:62px;border-radius:10px;background:linear-gradient(135deg,#dfe8f0,#596a79 45%,#18232e);border:2px solid #9fb0bf;box-shadow:0 7px 18px #000;pointer-events:none}
+.scale{position:absolute;left:calc(50% + 42px);top:0;bottom:0;width:45px;display:flex;flex-direction:column;justify-content:space-between;padding:4px 0;font-size:11px;color:#9bb0c2}.scale:before{content:"";position:absolute;left:-8px;top:0;bottom:0;width:2px;background:repeating-linear-gradient(to bottom,#5b7388 0 1px,transparent 1px 9px)}
+.bigPercent{font-size:39px;font-weight:950;color:var(--blue);margin-top:12px;text-shadow:0 0 16px #00bfff55}.gear{font-size:12px;letter-spacing:.15em;color:#9db0c1}
+.bottom{height:102px;display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:10px;position:relative;z-index:2}.action{border:2px solid #274156;background:linear-gradient(145deg,#0b1825,#040a10);color:#fff;font-size:19px;font-weight:950;letter-spacing:.05em;position:relative;overflow:hidden}.action:active{transform:scale(.985)}.brake{border-color:var(--red);background:linear-gradient(145deg,#26070c,#09070a);box-shadow:0 0 20px rgba(255,38,56,.08)}.brake.active{background:linear-gradient(145deg,#a50d1e,#39050a);box-shadow:0 0 25px rgba(255,38,56,.35)}.boost{border-color:#9a7600;background:linear-gradient(145deg,#211b05,#090b08);color:var(--yellow)}.boost.active{background:linear-gradient(145deg,#a07800,#302300);box-shadow:0 0 25px #ffc40044}.telemetry{display:flex;align-items:center;justify-content:center;gap:30px;border:1px solid #1a4059;background:#06111b;position:relative}.speedBox{text-align:center}.speedLabel{font-size:10px;color:#7d93a7;letter-spacing:.15em}.speed{font-size:40px;font-weight:950;line-height:1}.mode{font-size:12px;color:var(--blue);font-weight:900;letter-spacing:.15em}.footer{height:28px;display:flex;align-items:center;color:#8ca1b4;font-size:11px;gap:8px;position:relative;z-index:2}.dot{width:9px;height:9px;border-radius:50%;background:#687785}.dot.ok{background:var(--green);box-shadow:0 0 10px var(--green)}
+@media(max-width:900px){
+  .app{padding:7px;gap:7px}.top{height:58px;grid-template-columns:1.15fr auto}.connection{display:none}.brand{padding:0 14px}.logoMark{width:31px;height:31px;margin-right:9px}.brandText{font-size:18px}.brandSub{font-size:7px}.stop{font-size:14px;padding:0 18px}.main{grid-template-columns:1fr 1fr;grid-template-rows:1.05fr 1fr}.arenaCard{grid-column:1/-1;grid-row:1}.steering{grid-column:1;grid-row:2}.throttleCard{grid-column:2;grid-row:2}.joyWrap{width:min(270px,76%)}.bottom{height:76px}.action{font-size:15px}.telemetry{display:none}.footer{height:24px}}
+@media(max-width:560px){
+  .app{padding:5px;gap:5px}.top{height:50px}.brand{padding:0 10px}.logoMark{display:none}.brandText{font-size:17px}.stop{font-size:12px;padding:0 13px}.main{grid-template-rows:39% 61%;gap:5px}.arenaCard{padding:38px 7px 7px}.arenaTitle{left:12px;top:11px;font-size:12px}.legend{display:none}.trackSurface{left:5%;right:5%;top:8%;bottom:8%}.steering{padding-top:27px}.joyWrap{width:min(185px,72vw)}.cardTitle,.throttleTitle{font-size:11px;top:9px;left:11px}.readouts{bottom:8px;left:12px;right:12px}.readouts strong{font-size:17px}.arrow{font-size:22px}.throttleCard{padding-top:25px}.throttleRail{height:72%;width:48px;margin-top:8px}.throttleKnob{width:37px;height:50px}.scale{left:calc(50% + 32px);font-size:9px}.bigPercent{font-size:26px;margin-top:5px}.gear{font-size:9px}.bottom{height:58px;gap:5px}.action{font-size:11px}.footer{font-size:9px}}
+@media(max-height:650px){.arenaCard{padding-top:38px}.top{height:52px}.bottom{height:60px}.footer{height:20px}.main{grid-template-rows:42% 58%}.joyWrap{width:min(190px,70vh)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="logoMark"></div>
+      <div><div class="brandText">ARENA <b>RC</b></div><div class="brandSub">ESP32 BLUETOOTH CONTROLLER</div></div>
+    </div>
+    <div class="connection">
+      <div class="btIcon">ᛒ</div>
+      <div><div class="connTitle" id="deviceName">ARENA-RC</div><div class="connState"><span class="connDot" id="connDot"></span><span id="connState">Disconnected</span></div></div>
+    </div>
+    <button class="stop" id="stop">■ &nbsp;STOP</button>
+  </header>
+
+  <main class="main">
+    <section class="card steering">
+      <div class="cardTitle">STEERING <span>+</span> THROTTLE</div>
+      <div class="joyWrap" id="joy">
+        <div class="tick"></div>
+        <div class="arrow aTop">↑</div><div class="arrow aBottom">↓</div><div class="arrow aLeft">←</div><div class="arrow aRight">→</div>
+        <div class="stick" id="stick"></div>
+        <div class="readouts"><div>STEER<strong id="steerRead">0%</strong></div><div style="text-align:right">THROTTLE<strong class="cyan" id="throttleRead">0%</strong></div></div>
+      </div>
+    </section>
+
+    <section class="card arenaCard">
+      <div class="arenaTitle">ARENA <span>MAP</span></div>
+      <div class="arena">
+        <div class="trackSurface">
+          <div class="finish"></div><div class="ob rail1"></div><div class="ob rail2"></div><div class="ob rail3"></div>
+          <div class="rampShape"></div><div class="slalom"><i></i><i></i><i></i></div><div class="ob jump"></div><div class="trackEdge"></div>
+          <div class="mapCar" id="mapCar"></div>
+        </div>
+        <div class="legend"><b>COURSE</b><br><span><i class="lblue"></i>Ramp</span><br><span><i class="lyellow"></i>Slalom</span><br><span><i class="lwood"></i>Obstacle</span><br><span><i class="lred"></i>Robot</span></div>
+      </div>
+    </section>
+
+    <section class="card throttleCard">
+      <div class="throttleTitle">THROTTLE</div>
+      <div class="throttleRail" id="throttleRail">
+        <div class="throttleFill" id="throttleFill"></div><div class="throttleKnob" id="throttleKnob"></div>
+        <div class="scale"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div>
+        <input id="throttle" type="range" min="-100" max="100" value="0" aria-label="Throttle">
+      </div>
+      <div class="bigPercent" id="bigPercent">0%</div><div class="gear" id="gear">IDLE</div>
+    </section>
+  </main>
+
+  <div class="bottom">
+    <button class="action brake" id="brake">◉ &nbsp; BRAKE</button>
+    <div class="telemetry"><div class="speedBox"><div class="speedLabel">SPEED</div><div class="speed" id="speed">--</div></div><div><div class="speedLabel">MODE</div><div class="mode">RACE</div></div></div>
+    <button class="action boost" id="boost">🚀 &nbsp; BOOST<br><small>×1.25</small></button>
+  </div>
+
+  <footer class="footer"><span class="dot" id="dot"></span><span id="status">Not connected</span><span style="flex:1"></span><span>ESP32 • BLE</span></footer>
+</div>
+
+<script>
+const SERVICE_UUID='4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+const CMD_UUID='beb5483e-36e1-4688-b7f5-ea07361b26a8';
+const STATUS_UUID='beb5483e-36e1-4688-b7f5-ea07361b26a9';
+let device=null,cmdChar=null,statusChar=null,throttle=0,steer=0,brake=0,boost=0,lastSend=0,dragging=false;
+const $=id=>document.getElementById(id);
+const clamp=v=>Math.max(-100,Math.min(100,Math.round(v)));
+function setStatus(s,ok=false){$('status').textContent=s;$('dot').classList.toggle('ok',ok);$('connState').textContent=ok?'Connected':'Disconnected';$('connDot').style.background=ok?'var(--green)':'#687785';}
+function packet(){return `${clamp(throttle)},${clamp(steer)},${brake?1:0},${boost?1:0}`}
+async function connect(){
+  if(!navigator.bluetooth){setStatus('Web Bluetooth unavailable — use Chrome on Android');return}
+  try{
+    setStatus('Selecting ESP32…');
+    device=await navigator.bluetooth.requestDevice({filters:[{services:[SERVICE_UUID]}]});
+    $('deviceName').textContent=device.name||'ARENA-RC';
+    device.addEventListener('gattserverdisconnected',()=>{cmdChar=null;statusChar=null;setStatus('Disconnected');});
+    const server=await device.gatt.connect();
+    const svc=await server.getPrimaryService(SERVICE_UUID);
+    cmdChar=await svc.getCharacteristic(CMD_UUID);
+    try{statusChar=await svc.getCharacteristic(STATUS_UUID);await statusChar.startNotifications();statusChar.addEventListener('characteristicvaluechanged',e=>{const s=new TextDecoder().decode(e.target.value);});}catch(e){}
+    setStatus('Connected',true);send(true);
+  }catch(e){setStatus('Connection cancelled/error')}
+}
+async function send(force=false){
+  if(!cmdChar)return;
+  const now=performance.now();if(!force&&now-lastSend<40)return;lastSend=now;
+  try{await cmdChar.writeValue(new TextEncoder().encode(packet()));}catch(e){setStatus('BLE write error');}
+}
+setInterval(()=>send(),50);
+
+function updateUI(){
+  $('steerRead').textContent=clamp(steer)+'%';
+  $('throttleRead').textContent=Math.abs(clamp(throttle))+'%';
+  $('bigPercent').textContent=Math.abs(clamp(throttle))+'%';
+  $('gear').textContent=throttle>3?'FORWARD':throttle<-3?'REVERSE':'IDLE';
+  const p=Math.abs(throttle);
+  $('throttleFill').style.height=(p*0.72)+'%';
+  $('throttleKnob').style.bottom=(8+p*0.66)+'%';
+  $('mapCar').style.transform=`translate(${steer*0.32}px,${-throttle*0.12}px)`;
+}
+function joyMove(e){
+  const r=$('joy').getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+  let x=e.clientX-cx,y=e.clientY-cy,max=r.width*.34,d=Math.hypot(x,y);if(d>max){x=x/d*max;y=y/d*max;}
+  $('stick').style.transform=`translate(${x}px,${y}px)`;
+  steer=clamp(x/max*100);throttle=clamp(-y/max*100);$('throttle').value=throttle;updateUI();send();
+}
+$('joy').addEventListener('pointerdown',e=>{dragging=true;$('joy').setPointerCapture(e.pointerId);joyMove(e)});
+$('joy').addEventListener('pointermove',e=>{if(dragging)joyMove(e)});
+function joyUp(){dragging=false;steer=0;throttle=0;$('stick').style.transform='translate(0,0)';$('throttle').value=0;updateUI();send();}
+$('joy').addEventListener('pointerup',joyUp);$('joy').addEventListener('pointercancel',joyUp);
+
+$('throttle').addEventListener('input',e=>{throttle=+e.target.value;updateUI();send()});
+$('throttle').style.position='absolute';$('throttle').style.inset='0';$('throttle').style.width='100%';$('throttle').style.height='100%';$('throttle').style.opacity='0';$('throttle').style.cursor='pointer';$('throttle').style.zIndex='8';
+$('brake').addEventListener('pointerdown',()=>{brake=1;$('brake').classList.add('active');send(true)});
+$('brake').addEventListener('pointerup',()=>{brake=0;$('brake').classList.remove('active');send(true)});
+$('brake').addEventListener('pointercancel',()=>{brake=0;$('brake').classList.remove('active');send(true)});
+$('boost').addEventListener('pointerdown',()=>{boost=1;$('boost').classList.add('active');send(true)});
+$('boost').addEventListener('pointerup',()=>{boost=0;$('boost').classList.remove('active');send(true)});
+$('boost').addEventListener('pointercancel',()=>{boost=0;$('boost').classList.remove('active');send(true)});
+$('stop').addEventListener('click',()=>{throttle=0;steer=0;brake=1;boost=0;$('throttle').value=0;$('stick').style.transform='translate(0,0)';updateUI();send(true);setTimeout(()=>{brake=0;send(true)},250)});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){throttle=0;steer=0;brake=1;send(true)}});
+updateUI();
+</script>
+</body>
+</html>

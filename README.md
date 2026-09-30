@@ -39,7 +39,7 @@ A mobile-friendly racing robot controller using:
 ## 🌐 Controller
 
 GitHub Pages:
-https://krutikamalkhede2004-gif.github.io/arena-rc/
+https://krutikamalkhede2004-gif.github.io/roborace_rc/
 
 ## 🔵 BLE
 
